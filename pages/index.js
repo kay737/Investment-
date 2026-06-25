@@ -1,4 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+
+// 🔑 PUT YOUR FINNHUB API KEY HERE:
+const API_KEY = "d8uopv9r01qrt65tdot0d8uopv9r01qrt65tdotg"
 
 export default function Home() {
   const [cash, setCash] = useState(50000)
@@ -11,8 +14,46 @@ export default function Home() {
   const [showTrade, setShowTrade] = useState(false)
   const [selectedStock, setSelectedStock] = useState(null)
   const [shares, setShares] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [livePrices, setLivePrices] = useState({})
 
-  const totalValue = holdings.reduce((sum, h) => sum + (h.shares * h.price), 0)
+  // 📈 FETCH LIVE PRICES
+  useEffect(() => {
+    const fetchPrices = async () => {
+      const symbols = holdings.map(h => h.symbol)
+      const prices = {}
+      
+      for (const symbol of symbols) {
+        try {
+          const response = await fetch(
+            `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`
+          )
+          const data = await response.json()
+          if (data.c) {
+            prices[symbol] = data.c
+          }
+        } catch (error) {
+          console.log(`Could not fetch ${symbol}`)
+        }
+      }
+      
+      setLivePrices(prices)
+      setLoading(false)
+    }
+    
+    fetchPrices()
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchPrices, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Update holdings with live prices
+  const updatedHoldings = holdings.map(h => ({
+    ...h,
+    price: livePrices[h.symbol] || h.price
+  }))
+
+  const totalValue = updatedHoldings.reduce((sum, h) => sum + (h.shares * h.price), 0)
 
   const handleTrade = (type) => {
     if (!selectedStock) return
@@ -51,32 +92,51 @@ export default function Home() {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>🚀 InvestSmart</h1>
+      <div style={styles.header}>
+        <h1 style={styles.title}>🚀 InvestSmart</h1>
+        {loading ? (
+          <span style={styles.liveBadge}>⏳ Loading prices...</span>
+        ) : (
+          <span style={styles.liveBadge}>🟢 Live Prices</span>
+        )}
+      </div>
       <p style={styles.cash}>💰 Cash: ${cash.toLocaleString()}</p>
       
       <div style={styles.grid}>
-        <div style={styles.card}><div style={styles.label}>Portfolio</div><div style={styles.value}>${totalValue.toLocaleString()}</div></div>
-        <div style={styles.card}><div style={styles.label}>Holdings</div><div style={styles.value}>{holdings.length}</div></div>
+        <div style={styles.card}>
+          <div style={styles.label}>Portfolio</div>
+          <div style={styles.value}>${totalValue.toLocaleString()}</div>
+        </div>
+        <div style={styles.card}>
+          <div style={styles.label}>Holdings</div>
+          <div style={styles.value}>{updatedHoldings.length}</div>
+        </div>
       </div>
 
       <div style={styles.holdings}>
         <h3>📊 Your Stocks</h3>
-        {holdings.length === 0 ? (
+        {updatedHoldings.length === 0 ? (
           <p style={{ color: "#64748b", textAlign: "center", padding: "20px 0" }}>No stocks yet. Buy some!</p>
         ) : (
-          holdings.map((h, i) => (
+          updatedHoldings.map((h, i) => (
             <div key={i} style={styles.row}>
               <span><b>{h.symbol}</b></span>
               <span>{h.shares} shares</span>
+              <span style={{ color: livePrices[h.symbol] ? "#4ade80" : "#94a3b8" }}>
+                ${h.price.toFixed(2)}
+                {livePrices[h.symbol] && <span style={{ fontSize: "0.7rem", marginLeft: "4px" }}>🔴</span>}
+              </span>
               <span>${(h.shares * h.price).toLocaleString()}</span>
-              <button onClick={() => { setSelectedStock(h); setShowTrade(true) }} style={styles.btn}>Trade</button>
+              <button onClick={() => { setSelectedStock({ ...h, price: h.price }); setShowTrade(true) }} style={styles.btn}>
+                Trade
+              </button>
             </div>
           ))
         )}
       </div>
 
       <button style={styles.tradeBtn} onClick={() => {
-        setSelectedStock({ symbol: "AAPL", price: 178.50 })
+        setSelectedStock({ symbol: "AAPL", price: livePrices.AAPL || 178.50 })
         setShowTrade(true)
       }}>
         ➕ Trade New Stock
@@ -86,12 +146,13 @@ export default function Home() {
         <div style={styles.modal}>
           <div style={styles.modalContent}>
             <h2 style={{ marginBottom: "10px" }}>Trade {selectedStock.symbol}</h2>
-            <p>Price: ${selectedStock.price}</p>
+            <p>Live Price: <span style={{ color: "#4ade80" }}>${selectedStock.price.toFixed(2)}</span></p>
             <input 
               type="number" 
-              min="1" 
+              min="0.01"
+              step="0.01"
               value={shares} 
-              onChange={(e) => setShares(Math.max(1, parseInt(e.target.value) || 1))} 
+              onChange={(e) => setShares(Math.max(0.01, parseFloat(e.target.value) || 0.01))} 
               style={styles.input} 
             />
             <p style={styles.total}>Total: ${(selectedStock.price * shares).toLocaleString()}</p>
@@ -113,11 +174,27 @@ const styles = {
     padding: "2rem",
     fontFamily: "system-ui, sans-serif"
   },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "10px"
+  },
   title: {
     fontSize: "2.5rem",
     background: "linear-gradient(135deg, #60a5fa, #fbbf24)",
     WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent"
+    WebkitTextFillColor: "transparent",
+    margin: 0
+  },
+  liveBadge: {
+    background: "#1e293b",
+    padding: "4px 12px",
+    borderRadius: "20px",
+    fontSize: "0.8rem",
+    color: "#4ade80",
+    border: "1px solid #4ade80"
   },
   cash: {
     color: "#94a3b8",
@@ -152,19 +229,21 @@ const styles = {
     marginBottom: "20px"
   },
   row: {
-    display: "flex",
-    justifyContent: "space-between",
+    display: "grid",
+    gridTemplateColumns: "60px 70px 80px 80px 55px",
     padding: "10px 0",
     borderBottom: "1px solid #334155",
-    alignItems: "center"
+    alignItems: "center",
+    gap: "5px"
   },
   btn: {
     background: "#3b82f6",
     color: "white",
     border: "none",
-    padding: "5px 15px",
+    padding: "5px 10px",
     borderRadius: "6px",
-    cursor: "pointer"
+    cursor: "pointer",
+    fontSize: "0.8rem"
   },
   tradeBtn: {
     background: "#3b82f6",
@@ -245,4 +324,4 @@ const styles = {
     cursor: "pointer",
     margin: "5px 0"
   }
-    }
+}
