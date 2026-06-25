@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InvestSmart</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body { background: #0b1120; color: #e5e7eb; padding: 20px; }
+    .container { max-width: 500px; margin: 0 auto; }
+    h1 { font-size: 2rem; background: linear-gradient(135deg, #60a5fa, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
+    .sub { color: #94a3b8; margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .card { background: #1e293b; padding: 16px; border-radius: 12px; border: 1px solid #334155; }
+    .card .label { color: #94a3b8; font-size: 0.8rem; }
+    .card .value { font-size: 1.5rem; font-weight: bold; margin-top: 4px; }
+    .stocks { background: #1e293b; padding: 16px; border-radius: 12px; border: 1px solid #334155; }
+    .stocks h3 { color: #94a3b8; margin-bottom: 12px; font-size: 0.9rem; }
+    .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #334155; align-items: center; }
+    .btn { background: #3b82f6; color: white; border: none; padding: 5px 14px; border-radius: 6px; cursor: pointer; }
+    .btn:hover { background: #2563eb; }
+    .green { color: #4ade80; }
+    .gold { color: #fbbf24; }
+    .add-btn { width: 100%; padding: 10px; background: transparent; border: 1px dashed #3b82f6; border-radius: 8px; color: #3b82f6; cursor: pointer; margin-top: 12px; font-size: 0.9rem; }
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+    .modal.active { display: flex; }
+    .modal-content { background: #1e293b; padding: 24px; border-radius: 16px; max-width: 380px; width: 100%; border: 1px solid #334155; }
+    .modal-content h2 { margin-bottom: 8px; }
+    .modal-content input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0b1120; color: white; font-size: 1.2rem; margin: 10px 0; }
+    .buy-btn { width: 100%; padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 4px 0; }
+    .sell-btn { width: 100%; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 4px 0; }
+    .cancel-btn { width: 100%; padding: 12px; background: #334155; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 4px 0; }
+    .close-btn { float: right; background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; }
+    .modal-btns { display: flex; gap: 8px; margin: 12px 0; }
+    .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; }
+    .quick { display: flex; gap: 8px; margin: 8px 0 16px; }
+    .quick button { flex: 1; padding: 6px; background: #2d3748; border: 1px solid #334155; border-radius: 6px; color: #94a3b8; cursor: pointer; }
+    .total { color: #fbbf24; font-size: 1.2rem; font-weight: bold; margin: 12px 0; }
+  </style>
+</head>
+<body>
+<div class="container" id="app">
+  <h1>📊 InvestSmart</h1>
+  <div class="sub">💰 Cash: $<span id="cash">50000</span></div>
+
+  <div class="grid">
+    <div class="card"><div class="label">Portfolio</div><div class="value">$<span id="total">0</span></div></div>
+    <div class="card"><div class="label">Holdings</div><div class="value"><span id="count">0</span></div></div>
+  </div>
+
+  <div class="stocks">
+    <h3>📊 Your Stocks</h3>
+    <div id="list"></div>
+    <button class="add-btn" onclick="openTrade('AAPL', 178.50)">+ Trade New Stock</button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeModal()">✕</button>
+    <h2 id="modal-title">Trade AAPL</h2>
+    <p>Price: $<span id="modal-price">0</span></p>
+    <div class="modal-btns">
+      <button id="buy-tab" style="background:#22c55e;" onclick="setTradeType('BUY')">Buy</button>
+      <button id="sell-tab" style="background:#334155;" onclick="setTradeType('SELL')">Sell</button>
+    </div>
+    <input type="number" id="modal-shares" value="1" min="0.01" step="0.01">
+    <div class="quick">
+      <button onclick="setShares(1)">1</button>
+      <button onclick="setShares(5)">5</button>
+      <button onclick="setShares(10)">10</button>
+      <button onclick="setShares(25)">25</button>
+    </div>
+    <div class="total">Total: $<span id="modal-total">0</span></div>
+    <button class="buy-btn" id="confirm-btn" onclick="confirmTrade()">Buy</button>
+    <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+let cash = 50000
+let holdings = [
+  { symbol: "AAPL", shares: 120, price: 178.50 },
+  { symbol: "TSLA", shares: 45, price: 245.30 },
+  { symbol: "VTI", shares: 310, price: 259.80 },
+  { symbol: "BTC", shares: 0.42, price: 67200 }
+]
+let selectedStock = null
+let tradeType = "BUY"
+let currentShares = 1
+
+function updateUI() {
+  const total = holdings.reduce((s, h) => s + (h.shares * h.price), 0)
+  document.getElementById('cash').textContent = cash.toLocaleString()
+  document.getElementById('total').textContent = total.toLocaleString()
+  document.getElementById('count').textContent = holdings.length
+
+  const list = document.getElementById('list')
+  if (holdings.length === 0) {
+    list.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">No stocks. Buy some!</p>'
+  } else {
+    list.innerHTML = holdings.map(h => `
+      <div class="row">
+        <span><b>${h.symbol}</b> <span style="color:#94a3b8;font-size:0.7rem;">${h.shares}</span></span>
+        <span class="green">$${h.price.toFixed(2)}</span>
+        <span>$${(h.shares * h.price).toLocaleString()}</span>
+        <button class="btn" onclick="openTrade('${h.symbol}', ${h.price})">Trade</button>
+      </div>
+    `).join('')
+  }
+}
+
+function openTrade(symbol, price) {
+  selectedStock = { symbol, price }
+  document.getElementById('modal-title').textContent = 'Trade ' + symbol
+  document.getElementById('modal-price').textContent = price
+  document.getElementById('modal-shares').value = 1
+  currentShares = 1
+  tradeType = "BUY"
+  document.getElementById('buy-tab').style.background = '#22c55e'
+  document.getElementById('sell-tab').style.background = '#334155'
+  document.getElementById('confirm-btn').textContent = 'Buy ' + symbol
+  document.getElementById('confirm-btn').style.background = '#22c55e'
+  updateModalTotal()
+  document.getElementById('modal').classList.add('active')
+}
+
+function setTradeType(type) {
+  tradeType = type
+  if (type === 'BUY') {
+    document.getElementById('buy-tab').style.background = '#22c55e'
+    document.getElementById('sell-tab').style.background = '#334155'
+    document.getElementById('confirm-btn').textContent = 'Buy ' + (selectedStock ? selectedStock.symbol : '')
+    document.getElementById('confirm-btn').style.background = '#22c55e'
+  } else {
+    document.getElementById('buy-tab').style.background = '#334155'
+    document.getElementById('sell-tab').style.background = '#ef4444'
+    document.getElementById('confirm-btn').textContent = 'Sell ' + (selectedStock ? selectedStock.symbol : '')
+    document.getElementById('confirm-btn').style.background = '#ef4444'
+  }
+}
+
+function setShares(val) {
+  document.getElementById('modal-shares').value = val
+  currentShares = val
+  updateModalTotal()
+}
+
+function updateModalTotal() {
+  const shares = parseFloat(document.getElementById('modal-shares').value) || 0
+  const total = selectedStock ? selectedStock.price * shares : 0
+  document.getElementById('modal-total').textContent = total.toLocaleString()
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active')
+}
+
+function confirmTrade() {
+  if (!selectedStock) return
+  const shares = parseFloat(document.getElementById('modal-shares').value) || 0
+  if (shares <= 0) { alert('Enter valid shares!'); return }
+  
+  const cost = selectedStock.price * shares
+  
+  if (tradeType === 'BUY') {
+    if (cost > cash) { alert('Not enough cash!'); return }
+    const existing = holdings.find(h => h.symbol === selectedStock.symbol)
+    if (existing) {
+      existing.shares += shares
+    } else {
+      holdings.push({ ...selectedStock, shares: shares })
+    }
+    cash -= cost
+  } else {
+    const existing = holdings.find(h => h.symbol === selectedStock.symbol)
+    if (!existing || existing.shares < shares) { alert('Not enough shares!'); return }
+    existing.shares -= shares
+    if (existing.shares === 0) {
+      holdings = holdings.filter(h => h.symbol !== selectedStock.symbol)
+    }
+    cash += cost
+  }
+  
+  closeModal()
+  updateUI()
+}
+
+document.getElementById('modal-shares').addEventListener('input', updateModalTotal)
+updateUI()
+</script>
+</body>
+  </html>
