@@ -1,13 +1,9 @@
 import { useState } from "react"
-import { useSession, signIn, signOut } from "next-auth/react"
 
 export default function Home() {
-  const { data: session } = useSession()
   const [portfolio, setPortfolio] = useState({ 
     total: 124580, 
     today: 1240, 
-    invested: 98200, 
-    dividends: 3420,
     cash: 50000,
     holdings: [
       { symbol: "AAPL", shares: 120, price: 178.50, change: 12 },
@@ -22,26 +18,6 @@ export default function Home() {
   const [tradeType, setTradeType] = useState<"BUY" | "SELL">("BUY")
   const [message, setMessage] = useState("")
 
-  if (!session) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <h1 style={styles.title}>🚀 InvestSmart</h1>
-          <p style={styles.subtitle}>Your Investment Dashboard</p>
-          <button onClick={() => signIn("google")} style={styles.googleBtn}>
-            <span style={{ marginRight: "10px" }}>G</span>
-            Sign in with Google
-          </button>
-          <br />
-          <br />
-          <button onClick={() => signIn("credentials", { email: "demo@demo.com", password: "password" })} style={styles.demoBtn}>
-            Try Demo Account
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   const handleTrade = (type: "BUY" | "SELL") => {
     if (!selectedStock) return
     
@@ -49,12 +25,12 @@ export default function Home() {
     const totalCost = selectedStock.price * shares
     
     if (type === "BUY" && totalCost > portfolio.cash) {
-      setMessage(`Insufficient funds! You need $${totalCost.toLocaleString()}`)
+      setMessage(`❌ Insufficient funds! Need $${totalCost.toLocaleString()}`)
       return
     }
 
     if (type === "SELL" && stock && shares > stock.shares) {
-      setMessage(`You only have ${stock.shares} shares of ${selectedStock.symbol}`)
+      setMessage(`❌ You only have ${stock.shares} shares of ${selectedStock.symbol}`)
       return
     }
 
@@ -64,8 +40,6 @@ export default function Home() {
     if (type === "BUY") {
       if (index >= 0) {
         updatedHoldings[index].shares += shares
-        updatedHoldings[index].price = selectedStock.price
-        updatedHoldings[index].change = Math.round((Math.random() * 20) - 5)
       } else {
         updatedHoldings.push({
           symbol: selectedStock.symbol,
@@ -80,7 +54,7 @@ export default function Home() {
         holdings: updatedHoldings,
         total: portfolio.total + totalCost
       })
-      setMessage(`Bought ${shares} shares of ${selectedStock.symbol} for $${totalCost.toLocaleString()}`)
+      setMessage(`✅ Bought ${shares} shares of ${selectedStock.symbol} for $${totalCost.toLocaleString()}`)
     } else {
       if (index >= 0) {
         updatedHoldings[index].shares -= shares
@@ -93,7 +67,7 @@ export default function Home() {
           holdings: updatedHoldings,
           total: portfolio.total - totalCost
         })
-        setMessage(`Sold ${shares} shares of ${selectedStock.symbol} for $${totalCost.toLocaleString()}`)
+        setMessage(`✅ Sold ${shares} shares of ${selectedStock.symbol} for $${totalCost.toLocaleString()}`)
       }
     }
 
@@ -105,17 +79,12 @@ export default function Home() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <div>
-          <h1 style={styles.logo}>🚀 InvestSmart</h1>
-          <p style={styles.user}>Welcome, {session.user.name || "Investor"}! Cash: ${portfolio.cash.toLocaleString()}</p>
-        </div>
-        <button onClick={() => signOut()} style={styles.signOutBtn}>
-          Sign Out
-        </button>
+        <h1 style={styles.logo}>🚀 InvestSmart</h1>
+        <p style={styles.user}>💰 Cash: ${portfolio.cash.toLocaleString()}</p>
       </div>
 
       {message && (
-        <div style={message.includes("Bought") || message.includes("Sold") ? styles.successMsg : styles.errorMsg}>
+        <div style={message.includes("✅") ? styles.successMsg : styles.errorMsg}>
           {message}
         </div>
       )}
@@ -132,10 +101,6 @@ export default function Home() {
         <div style={styles.card}>
           <div style={styles.cardLabel}>Cash</div>
           <div style={{ ...styles.cardValue, color: "#fbbf24" }}>${portfolio.cash.toLocaleString()}</div>
-        </div>
-        <div style={styles.card}>
-          <div style={styles.cardLabel}>Dividends</div>
-          <div style={{ ...styles.cardValue, color: "#60a5fa" }}>${portfolio.dividends.toLocaleString()}</div>
         </div>
       </div>
 
@@ -154,26 +119,16 @@ export default function Home() {
               <span style={h.change >= 0 ? styles.green : styles.red}>
                 {h.change >= 0 ? "+" : ""}{h.change}%
               </span>
-              <button 
-                onClick={() => {
-                  setSelectedStock(h)
-                  setTradeType("BUY")
-                  setShowTrade(true)
-                }}
-                style={styles.buyBtn}
-              >
-                Buy
-              </button>
-              <button 
-                onClick={() => {
-                  setSelectedStock(h)
-                  setTradeType("SELL")
-                  setShowTrade(true)
-                }}
-                style={styles.sellBtn}
-              >
-                Sell
-              </button>
+              <button onClick={() => {
+                setSelectedStock(h)
+                setTradeType("BUY")
+                setShowTrade(true)
+              }} style={styles.buyBtn}>Buy</button>
+              <button onClick={() => {
+                setSelectedStock(h)
+                setTradeType("SELL")
+                setShowTrade(true)
+              }} style={styles.sellBtn}>Sell</button>
             </div>
           ))
         )}
@@ -190,48 +145,25 @@ export default function Home() {
       {showTrade && selectedStock && (
         <div style={styles.modal}>
           <div style={styles.modalContent}>
-            <h2 style={{ marginBottom: "1rem" }}>Trade {selectedStock.symbol}</h2>
+            <h2>Trade {selectedStock.symbol}</h2>
             <p style={styles.modalPrice}>Price: ${selectedStock.price.toFixed(2)}</p>
             
             <div style={styles.modalButtons}>
-              <button 
-                onClick={() => setTradeType("BUY")}
-                style={{ ...styles.modalTypeBtn, background: tradeType === "BUY" ? "#22c55e" : "#334155" }}
-              >
-                Buy
-              </button>
-              <button 
-                onClick={() => setTradeType("SELL")}
-                style={{ ...styles.modalTypeBtn, background: tradeType === "SELL" ? "#ef4444" : "#334155" }}
-              >
-                Sell
-              </button>
+              <button onClick={() => setTradeType("BUY")} style={{ ...styles.modalTypeBtn, background: tradeType === "BUY" ? "#22c55e" : "#334155" }}>Buy</button>
+              <button onClick={() => setTradeType("SELL")} style={{ ...styles.modalTypeBtn, background: tradeType === "SELL" ? "#ef4444" : "#334155" }}>Sell</button>
             </div>
 
             <div style={styles.modalInput}>
               <label>Shares:</label>
-              <input
-                type="number"
-                min="1"
-                value={shares}
-                onChange={(e) => setShares(Math.max(1, parseInt(e.target.value) || 1))}
-                style={styles.input}
-              />
+              <input type="number" min="1" value={shares} onChange={(e) => setShares(Math.max(1, parseInt(e.target.value) || 1))} style={styles.input} />
             </div>
 
-            <p style={styles.modalTotal}>
-              Total: ${(selectedStock.price * shares).toLocaleString()}
-            </p>
+            <p style={styles.modalTotal}>Total: ${(selectedStock.price * shares).toLocaleString()}</p>
 
-            <button 
-              onClick={() => handleTrade(tradeType)}
-              style={tradeType === "BUY" ? styles.confirmBuy : styles.confirmSell}
-            >
-              {tradeType === "BUY" ? "✅" : "❌"} Confirm {tradeType}
+            <button onClick={() => handleTrade(tradeType)} style={tradeType === "BUY" ? styles.confirmBuy : styles.confirmSell}>
+              Confirm {tradeType}
             </button>
-            <button onClick={() => setShowTrade(false)} style={styles.closeModal}>
-              Cancel
-            </button>
+            <button onClick={() => setShowTrade(false)} style={styles.closeModal}>Cancel</button>
           </div>
         </div>
       )}
@@ -246,44 +178,6 @@ const styles = {
     minHeight: "100vh",
     padding: "2rem",
     fontFamily: "system-ui, sans-serif"
-  },
-  card: {
-    background: "#1e293b",
-    padding: "1.5rem",
-    borderRadius: "12px",
-    border: "1px solid #334155",
-  },
-  title: {
-    fontSize: "3rem",
-    background: "linear-gradient(135deg, #60a5fa, #fbbf24)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    marginBottom: "0.5rem"
-  },
-  subtitle: {
-    color: "#94a3b8",
-    marginBottom: "2rem"
-  },
-  googleBtn: {
-    background: "#fff",
-    color: "#333",
-    border: "none",
-    padding: "0.75rem 2rem",
-    borderRadius: "8px",
-    fontSize: "1rem",
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    fontWeight: "bold"
-  },
-  demoBtn: {
-    background: "#3b82f6",
-    color: "white",
-    border: "none",
-    padding: "0.75rem 2rem",
-    borderRadius: "8px",
-    fontSize: "1rem",
-    cursor: "pointer"
   },
   header: {
     display: "flex",
@@ -301,14 +195,6 @@ const styles = {
   },
   user: {
     color: "#94a3b8"
-  },
-  signOutBtn: {
-    background: "#dc2626",
-    color: "white",
-    border: "none",
-    padding: "0.5rem 1.5rem",
-    borderRadius: "8px",
-    cursor: "pointer"
   },
   successMsg: {
     background: "#052e16",
@@ -328,9 +214,15 @@ const styles = {
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
+    gridTemplateColumns: "repeat(3, 1fr)",
     gap: "1rem",
     marginBottom: "2rem"
+  },
+  card: {
+    background: "#1e293b",
+    padding: "1.5rem",
+    borderRadius: "12px",
+    border: "1px solid #334155",
   },
   cardLabel: {
     color: "#94a3b8",
