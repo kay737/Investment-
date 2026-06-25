@@ -11,32 +11,32 @@
     body { background: #0b1120; color: #e5e7eb; padding: 16px; min-height: 100vh; }
     .container { max-width: 600px; margin: 0 auto; }
     
-    /* Header */
     .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; margin-bottom: 16px; }
     .logo { font-size: 1.5rem; background: linear-gradient(135deg, #60a5fa, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .balance { background: #1e293b; padding: 4px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; color: #fbbf24; }
     
-    /* Stats */
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
     .card { background: #1e293b; padding: 16px; border-radius: 12px; border: 1px solid #334155; }
     .card .label { color: #94a3b8; font-size: 0.8rem; }
     .card .value { font-size: 1.5rem; font-weight: bold; margin-top: 4px; }
     .green { color: #4ade80; }
+    .red { color: #f87171; }
     
-    /* Chart */
-    .chart-container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 12px; margin-bottom: 16px; height: 300px; }
+    .chart-container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 8px; margin-bottom: 12px; height: 280px; }
     #tradingview-widget { width: 100%; height: 100%; }
     
-    /* Holdings */
+    .symbol-select { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; justify-content: center; }
+    .symbol-select button { padding: 5px 14px; background: #2d3748; border: none; border-radius: 20px; color: #94a3b8; cursor: pointer; font-size: 0.8rem; }
+    .symbol-select button.active { background: #3b82f6; color: white; }
+    
     .stocks { background: #1e293b; padding: 16px; border-radius: 12px; border: 1px solid #334155; }
     .stocks h3 { color: #94a3b8; margin-bottom: 12px; font-size: 0.9rem; }
     .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #334155; align-items: center; }
     .row:last-child { border-bottom: none; }
-    .btn { background: #3b82f6; color: white; border: none; padding: 5px 14px; border-radius: 6px; cursor: pointer; }
+    .btn { background: #3b82f6; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
     .btn:hover { background: #2563eb; }
     .add-btn { width: 100%; padding: 10px; background: transparent; border: 1px dashed #3b82f6; border-radius: 8px; color: #3b82f6; cursor: pointer; margin-top: 12px; font-size: 0.9rem; }
     
-    /* Modal */
     .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
     .modal.active { display: flex; }
     .modal-content { background: #1e293b; padding: 24px; border-radius: 16px; max-width: 380px; width: 100%; border: 1px solid #334155; }
@@ -51,41 +51,34 @@
     .quick { display: flex; gap: 8px; margin: 8px 0 16px; }
     .quick button { flex: 1; padding: 6px; background: #2d3748; border: 1px solid #334155; border-radius: 6px; color: #94a3b8; cursor: pointer; }
     .total { color: #fbbf24; font-size: 1.2rem; font-weight: bold; margin: 12px 0; }
-    .symbol-select { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-    .symbol-select button { padding: 6px 16px; background: #2d3748; border: none; border-radius: 20px; color: #94a3b8; cursor: pointer; font-size: 0.9rem; }
-    .symbol-select button.active { background: #3b82f6; color: white; }
-    .symbol-select button:hover { background: #3b82f6; color: white; }
+    .live-price { text-align: center; padding: 4px; color: #4ade80; font-size: 0.8rem; }
   </style>
 </head>
 <body>
-<div class="container" id="app">
-  <!-- Header -->
+<div class="container">
   <div class="header">
     <h1 class="logo">📊 InvestSmart</h1>
     <span class="balance">💰 $<span id="cash">50000</span></span>
   </div>
 
-  <!-- Stats -->
   <div class="grid">
     <div class="card"><div class="label">Portfolio</div><div class="value">$<span id="total">0</span></div></div>
     <div class="card"><div class="label">Holdings</div><div class="value"><span id="count">0</span></div></div>
   </div>
 
-  <!-- Chart -->
   <div class="chart-container">
     <div id="tradingview-widget"></div>
   </div>
 
-  <!-- Symbol Selector -->
-  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
-    <button onclick="changeChart('AAPL')" id="btn-AAPL" style="padding:6px 16px; background:#3b82f6; border:none; border-radius:20px; color:white; cursor:pointer;">AAPL</button>
-    <button onclick="changeChart('TSLA')" id="btn-TSLA" style="padding:6px 16px; background:#2d3748; border:none; border-radius:20px; color:#94a3b8; cursor:pointer;">TSLA</button>
-    <button onclick="changeChart('VTI')" id="btn-VTI" style="padding:6px 16px; background:#2d3748; border:none; border-radius:20px; color:#94a3b8; cursor:pointer;">VTI</button>
-    <button onclick="changeChart('BTCUSD')" id="btn-BTCUSD" style="padding:6px 16px; background:#2d3748; border:none; border-radius:20px; color:#94a3b8; cursor:pointer;">BTC</button>
-    <button onclick="changeChart('AMZN')" id="btn-AMZN" style="padding:6px 16px; background:#2d3748; border:none; border-radius:20px; color:#94a3b8; cursor:pointer;">AMZN</button>
+  <div class="symbol-select">
+    <button onclick="changeChart('AAPL')" id="btn-AAPL" class="active">AAPL</button>
+    <button onclick="changeChart('TSLA')" id="btn-TSLA">TSLA</button>
+    <button onclick="changeChart('VTI')" id="btn-VTI">VTI</button>
+    <button onclick="changeChart('BTCUSD')" id="btn-BTCUSD">BTC</button>
+    <button onclick="changeChart('AMZN')" id="btn-AMZN">AMZN</button>
+    <button onclick="changeChart('NVDA')" id="btn-NVDA">NVDA</button>
   </div>
 
-  <!-- Holdings -->
   <div class="stocks">
     <h3>📊 Your Stocks</h3>
     <div id="list"></div>
@@ -93,7 +86,6 @@
   </div>
 </div>
 
-<!-- Modal -->
 <div class="modal" id="modal">
   <div class="modal-content">
     <button class="close-btn" onclick="closeModal()">✕</button>
@@ -127,15 +119,14 @@ let holdings = [
 let selectedStock = null
 let tradeType = "BUY"
 let currentShares = 1
-let currentSymbol = "AAPL"
 
-// Initialize TradingView Chart
 function initChart(symbol) {
-  const widget = new TradingView.widget({
+  const isCrypto = symbol === "BTCUSD"
+  return new TradingView.widget({
     "container_id": "tradingview-widget",
     "autosize": true,
-    "symbol": symbol === "BTCUSD" ? "BITSTAMP:BTCUSD" : "NASDAQ:" + symbol,
-    "interval": "D",
+    "symbol": isCrypto ? "BITSTAMP:BTCUSD" : "NASDAQ:" + symbol,
+    "interval": "5",
     "timezone": "Etc/UTC",
     "theme": "dark",
     "style": "1",
@@ -145,48 +136,23 @@ function initChart(symbol) {
     "allow_symbol_change": false,
     "hide_side_toolbar": true,
     "save_image": false,
-    "studies": [],
+    "studies": ["MASimple@tv-basicstudies"],
     "hide_top_toolbar": true,
-  });
-  return widget
+    "range": "1M",
+  })
 }
 
 let widget = initChart("AAPL")
 
 function changeChart(symbol) {
-  currentSymbol = symbol
-  // Update button styles
-  document.querySelectorAll('.symbol-select button, [onclick^="changeChart"]').forEach(btn => {
-    if (btn.id === 'btn-' + symbol) {
-      btn.style.background = '#3b82f6'
-      btn.style.color = 'white'
-    } else if (btn.id && btn.id.startsWith('btn-')) {
-      btn.style.background = '#2d3748'
-      btn.style.color = '#94a3b8'
-    }
+  document.querySelectorAll('.symbol-select button').forEach(btn => {
+    btn.className = ''
   })
+  document.getElementById('btn-' + symbol).className = 'active'
   
-  // Update chart
   const container = document.getElementById('tradingview-widget')
   container.innerHTML = ''
-  const newWidget = new TradingView.widget({
-    "container_id": "tradingview-widget",
-    "autosize": true,
-    "symbol": symbol === "BTCUSD" ? "BITSTAMP:BTCUSD" : "NASDAQ:" + symbol,
-    "interval": "D",
-    "timezone": "Etc/UTC",
-    "theme": "dark",
-    "style": "1",
-    "locale": "en",
-    "toolbar_bg": "#0b1120",
-    "enable_publishing": false,
-    "allow_symbol_change": false,
-    "hide_side_toolbar": true,
-    "save_image": false,
-    "studies": [],
-    "hide_top_toolbar": true,
-  })
-  widget = newWidget
+  widget = initChart(symbol)
 }
 
 function updateUI() {
