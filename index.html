@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InvestSmart</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body { background: #0b1120; color: #e5e7eb; padding: 20px; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+    .container { max-width: 600px; width: 100%; }
+    h1 { font-size: 2.5rem; background: linear-gradient(135deg, #60a5fa, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
+    .cash { text-align: center; color: #94a3b8; font-size: 1.2rem; margin: 10px 0 30px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+    .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; text-align: center; }
+    .label { color: #94a3b8; font-size: 0.9rem; }
+    .value { font-size: 1.8rem; font-weight: bold; margin-top: 5px; }
+    .green { color: #4ade80; }
+    .holdings { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 20px; }
+    .holdings h3 { color: #94a3b8; margin-bottom: 15px; }
+    .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #334155; align-items: center; }
+    .row:last-child { border-bottom: none; }
+    .btn { background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; cursor: pointer; width: 100%; }
+    .btn:hover { background: #2563eb; }
+    .trade-btn { background: #22c55e; color: white; border: none; padding: 5px 15px; border-radius: 6px; cursor: pointer; }
+    .trade-btn:hover { background: #16a34a; }
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal.active { display: flex; }
+    .modal-content { background: #1e293b; padding: 30px; border-radius: 16px; max-width: 350px; width: 100%; border: 1px solid #334155; }
+    .modal-content h2 { margin-bottom: 10px; }
+    .modal-content input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0b1120; color: white; margin: 10px 0; font-size: 1rem; }
+    .modal-content .total { color: #fbbf24; font-size: 1.2rem; font-weight: bold; margin: 10px 0; }
+    .buy-btn { width: 100%; padding: 10px; background: #22c55e; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 5px 0; }
+    .sell-btn { width: 100%; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 5px 0; }
+    .cancel-btn { width: 100%; padding: 10px; background: #334155; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin: 5px 0; }
+  </style>
+</head>
+<body>
+<div class="container" id="app">
+  <h1>🚀 InvestSmart</h1>
+  <p class="cash">💰 Cash: $<span id="cash">50000</span></p>
+  
+  <div class="grid">
+    <div class="card"><div class="label">Portfolio</div><div class="value">$<span id="total">0</span></div></div>
+    <div class="card"><div class="label">Holdings</div><div class="value"><span id="count">0</span></div></div>
+  </div>
+
+  <div class="holdings">
+    <h3>📊 Your Stocks</h3>
+    <div id="holdings-list">
+      <p style="color:#64748b; text-align:center; padding:20px 0;">No stocks yet. Buy some!</p>
+    </div>
+  </div>
+
+  <button class="btn" onclick="openTrade()">➕ Trade New Stock</button>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h2 id="modal-title">Trade AAPL</h2>
+    <p>Price: $<span id="modal-price">0</span></p>
+    <input type="number" id="modal-shares" value="1" min="1">
+    <p class="total">Total: $<span id="modal-total">0</span></p>
+    <button class="buy-btn" onclick="confirmTrade('BUY')">✅ Buy</button>
+    <button class="sell-btn" onclick="confirmTrade('SELL')">❌ Sell</button>
+    <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+let cash = 50000
+let holdings = [
+  { symbol: "AAPL", shares: 120, price: 178.50 },
+  { symbol: "TSLA", shares: 45, price: 245.30 },
+  { symbol: "VTI", shares: 310, price: 259.80 },
+  { symbol: "BTC", shares: 0.42, price: 67200 }
+]
+let selectedStock = null
+
+function updateUI() {
+  const total = holdings.reduce((sum, h) => sum + (h.shares * h.price), 0)
+  document.getElementById('cash').textContent = cash.toLocaleString()
+  document.getElementById('total').textContent = total.toLocaleString()
+  document.getElementById('count').textContent = holdings.length
+
+  const list = document.getElementById('holdings-list')
+  if (holdings.length === 0) {
+    list.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">No stocks yet. Buy some!</p>'
+  } else {
+    list.innerHTML = holdings.map(h => `
+      <div class="row">
+        <span><b>${h.symbol}</b></span>
+        <span>${h.shares} shares</span>
+        <span>$${(h.shares * h.price).toLocaleString()}</span>
+        <button class="trade-btn" onclick="openTradeFor('${h.symbol}')">Trade</button>
+      </div>
+    `).join('')
+  }
+}
+
+function openTradeFor(symbol) {
+  const stock = holdings.find(h => h.symbol === symbol)
+  if (stock) {
+    selectedStock = stock
+    document.getElementById('modal-title').textContent = `Trade ${stock.symbol}`
+    document.getElementById('modal-price').textContent = stock.price
+    document.getElementById('modal-shares').value = 1
+    updateTotal()
+    document.getElementById('modal').classList.add('active')
+  }
+}
+
+function openTrade() {
+  selectedStock = { symbol: "AAPL", price: 178.50 }
+  document.getElementById('modal-title').textContent = 'Trade AAPL'
+  document.getElementById('modal-price').textContent = '178.50'
+  document.getElementById('modal-shares').value = 1
+  updateTotal()
+  document.getElementById('modal').classList.add('active')
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active')
+}
+
+function updateTotal() {
+  const shares = parseInt(document.getElementById('modal-shares').value) || 0
+  const total = selectedStock ? selectedStock.price * shares : 0
+  document.getElementById('modal-total').textContent = total.toLocaleString()
+}
+
+function confirmTrade(type) {
+  if (!selectedStock) return
+  const shares = parseInt(document.getElementById('modal-shares').value) || 0
+  if (shares <= 0) { alert('Enter valid shares!'); return }
+  
+  const cost = selectedStock.price * shares
+  
+  if (type === 'BUY') {
+    if (cost > cash) { alert('Not enough cash!'); return }
+    const existing = holdings.find(h => h.symbol === selectedStock.symbol)
+    if (existing) {
+      existing.shares += shares
+    } else {
+      holdings.push({ ...selectedStock, shares: shares })
+    }
+    cash -= cost
+  } else {
+    const existing = holdings.find(h => h.symbol === selectedStock.symbol)
+    if (!existing || existing.shares < shares) { alert('Not enough shares!'); return }
+    existing.shares -= shares
+    if (existing.shares === 0) {
+      holdings = holdings.filter(h => h.symbol !== selectedStock.symbol)
+    }
+    cash += cost
+  }
+  
+  closeModal()
+  updateUI()
+}
+
+document.getElementById('modal-shares').addEventListener('input', updateTotal)
+updateUI()
+</script>
+</body>
+  </html>
