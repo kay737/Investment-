@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "InvestSmart",
   "short_name": "InvestSmart",
   "description": "Your Investment Dashboard",
@@ -7,6 +8,15 @@
   "background_color": "#0b1120",
   "theme_color": "#0b1120",
   "orientation": "portrait",
+  "categories": ["finance", "business", "productivity"],
+  "screenshots": [
+    {
+      "src": "https://img.icons8.com/fluency/512/000000/stocks.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
   "icons": [
     {
       "src": "https://img.icons8.com/fluency/96/000000/stocks.png",
