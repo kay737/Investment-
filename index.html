@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head><head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
@@ -12,12 +12,6 @@
   <meta name="apple-mobile-web-app-title" content="InvestSmart">
   <meta name="theme-color" content="#0b1120">
   
-  <title>InvestSmart</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- ... rest of your code ... -->
-</head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>InvestSmart</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -168,8 +162,7 @@
 
 <script>
 // =============================================
-// ALL CODE IN ONE FILE - NO API NEEDED!
-// Everything works locally in your browser
+// ALL CODE IN ONE FILE - WORKS WITHOUT API!
 // =============================================
 
 // --- AUTH (Local Storage) ---
@@ -236,7 +229,6 @@ function registerUser() {
     return
   }
   
-  // Check if user exists
   const saved = localStorage.getItem('investsmart_users')
   let users = saved ? JSON.parse(saved) : []
   
@@ -310,7 +302,6 @@ function showDashboard() {
   initializeApp()
 }
 
-// Save user data whenever it changes
 function saveUserData() {
   if (currentUser) {
     localStorage.setItem('investsmart_user_' + currentUser.id, JSON.stringify({
@@ -507,11 +498,15 @@ if (!checkAuth()) {
   document.getElementById('auth-screen').style.display = 'block'
   document.getElementById('dashboard').style.display = 'none'
 }
-</script>// Register Service Worker
+
+// =============================================
+// ✅ SERVICE WORKER REGISTRATION (FIXED)
+// =============================================
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
-    .then(() => console.log('Service Worker registered'))
-    .catch((err) => console.log('Service Worker failed:', err));
+    .then(() => console.log('✅ Service Worker registered'))
+    .catch((err) => console.log('❌ Service Worker failed:', err));
 }
+</script>
 </body>
-                                                                                  </html>
+</html>
