@@ -507,6 +507,11 @@ if (!checkAuth()) {
   document.getElementById('auth-screen').style.display = 'block'
   document.getElementById('dashboard').style.display = 'none'
 }
-</script>
+</script>// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(() => console.log('Service Worker registered'))
+    .catch((err) => console.log('Service Worker failed:', err));
+}
 </body>
                                                                                   </html>
