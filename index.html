@@ -158,21 +158,21 @@
 let currentUser = null
 let token = null
 
-function showRegister() {
+function showRegister() {/api}
   document.getElementById('login-form').style.display = 'none'
   document.getElementById('register-form').style.display = 'block'
   document.getElementById('login-error').textContent = ''
   document.getElementById('register-error').textContent = ''
 }
 
-function showLogin() {
+function showLogin() {/api}
   document.getElementById('login-form').style.display = 'block'
   document.getElementById('register-form').style.display = 'none'
   document.getElementById('login-error').textContent = ''
   document.getElementById('register-error').textContent = ''
 }
 
-async function registerUser() {
+async function registerUser() {/api}
   const name = document.getElementById('register-name').value
   const email = document.getElementById('register-email').value
   const password = document.getElementById('register-password').value
@@ -184,7 +184,7 @@ async function registerUser() {
   }
   
   try {
-    const res = await fetch('/api/[...auth]', {
+    const res = await fetch('/api',{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'register', name, email, password })
@@ -203,7 +203,7 @@ async function registerUser() {
   }
 }
 
-async function loginUser() {
+async function loginUser() {/api}
   const email = document.getElementById('login-email').value
   const password = document.getElementById('login-password').value
   const errorEl = document.getElementById('login-error')
@@ -214,7 +214,7 @@ async function loginUser() {
   }
   
   try {
-    const res = await fetch('/api/[...auth]', {
+    const res = await fetch('/api',{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'login', email, password })
@@ -233,7 +233,7 @@ async function loginUser() {
   }
 }
 
-async function logoutUser() {
+async function logoutUser() {/api}
   if (token) {
     await fetch('/api/[...auth]', {
       method: 'POST',
@@ -247,14 +247,14 @@ async function logoutUser() {
   document.getElementById('dashboard').style.display = 'none'
 }
 
-async function loadDashboard() {
+async function loadDashboard() {/api}
   document.getElementById('auth-screen').style.display = 'none'
   document.getElementById('dashboard').style.display = 'block'
   document.getElementById('user-name').textContent = currentUser.name
   
   // Load user data
   try {
-    const res = await fetch('/api/[...auth]', {
+    const res = await fetch('/api/[...auth]', {/api}
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'me', token })
@@ -279,7 +279,7 @@ async function loadDashboard() {
 async function saveUserData() {
   if (!token) return
   try {
-    await fetch('/api/[...auth]', {
+    await fetch('/api',{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update', token, cash, holdings })
