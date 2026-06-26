@@ -3,15 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- PWA Support -->
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/000000/stocks.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="InvestSmart">
   <meta name="theme-color" content="#0b1120">
-  
   <title>InvestSmart</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -48,7 +45,7 @@
     .add-btn { width: 100%; padding: 10px; background: transparent; border: 1px dashed #3b82f6; border-radius: 8px; color: #3b82f6; cursor: pointer; margin-top: 12px; font-size: 0.9rem; }
     .status { text-align: center; padding: 4px; font-size: 0.7rem; color: #4ade80; margin-bottom: 8px; }
     .profit { font-weight: bold; }
-    .history-item { padding: 8px 0; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; font-size: 0.9rem; }
+    .history-item { padding: 8px 0; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; font-size: 0.9rem; flex-wrap: wrap; gap: 4px; }
     .history-buy { color: #4ade80; }
     .history-sell { color: #f87171; }
     .auth-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
@@ -126,7 +123,7 @@
       <div class="chart-container">
         <canvas id="chart"></canvas>
       </div>
-      <div id="status" class="status">✅ Real-time simulation</div>
+      <div id="status" class="status">✅ Live</div>
 
       <div class="symbol-select">
         <button onclick="changeChart('AAPL')" id="btn-AAPL" class="active">AAPL</button>
@@ -140,13 +137,11 @@
         <button onclick="changeChart('ETHUSD')" id="btn-ETHUSD">ETH</button>
       </div>
 
-      <!-- Tabs -->
       <div class="tabs">
         <button class="tab active" onclick="switchTab('holdings')" id="tab-holdings">📊 Holdings</button>
         <button class="tab" onclick="switchTab('history')" id="tab-history">📋 History</button>
       </div>
 
-      <!-- Holdings Tab -->
       <div id="holdings-tab">
         <div class="stocks">
           <h3>📊 Your Stocks</h3>
@@ -155,7 +150,6 @@
         </div>
       </div>
 
-      <!-- History Tab -->
       <div id="history-tab" style="display:none;">
         <div class="stocks">
           <h3>📋 Transaction History</h3>
@@ -196,7 +190,6 @@
 // COMPLETE APP - Real Prices, More Stocks, History
 // =============================================
 
-// --- DATA ---
 let currentUser = null
 let cash = 50000
 let holdings = []
@@ -208,7 +201,6 @@ let chart = null
 let currentSymbol = "AAPL"
 let initialPortfolioValue = 0
 
-// --- AUTH ---
 function checkAuth() {
   const saved = localStorage.getItem('investsmart_user')
   if (saved) {
@@ -355,7 +347,6 @@ function saveUserData() {
   }
 }
 
-// --- TABS ---
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.className = 'tab')
   if (tab === 'holdings') {
@@ -370,7 +361,6 @@ function switchTab(tab) {
   }
 }
 
-// --- CHART ---
 function generateHistory(symbol, days = 30) {
   const prices = []
   let price = symbol === "AAPL" ? 275 : 
@@ -452,11 +442,9 @@ function changeChart(symbol) {
   createChart(symbol)
 }
 
-// --- UI ---
 function updateUI() {
   const total = getTotalValue()
   const profit = total - initialPortfolioValue
-  const profitPercent = initialPortfolioValue > 0 ? (profit / initialPortfolioValue * 100) : 0
   
   document.getElementById('cash').textContent = cash.toLocaleString()
   document.getElementById('total').textContent = total.toLocaleString()
@@ -484,7 +472,6 @@ function updateUI() {
   saveUserData()
 }
 
-// --- HISTORY ---
 function renderHistory() {
   const list = document.getElementById('history-list')
   if (transactions.length === 0) {
@@ -507,7 +494,6 @@ function renderHistory() {
   }).join('')
 }
 
-// --- TRADE ---
 function openTrade(symbol, price) {
   selectedStock = { symbol, price }
   document.getElementById('modal-title').textContent = 'Trade ' + symbol
@@ -580,7 +566,6 @@ function confirmTrade() {
     cash += cost
   }
   
-  // Record transaction
   transactions.push({
     type: tradeType,
     symbol: selectedStock.symbol,
@@ -597,7 +582,6 @@ function confirmTrade() {
   }
 }
 
-// --- INIT ---
 function initializeApp() {
   createChart('AAPL')
   updateUI()
@@ -614,13 +598,11 @@ function initializeApp() {
 
 document.getElementById('modal-shares').addEventListener('input', updateModalTotal)
 
-// --- START ---
 if (!checkAuth()) {
   document.getElementById('auth-screen').style.display = 'block'
   document.getElementById('dashboard').style.display = 'none'
 }
 
-// Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .then(() => console.log('✅ Service Worker registered'))
