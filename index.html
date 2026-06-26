@@ -24,24 +24,33 @@
     .user-name { color: #94a3b8; font-size: 0.9rem; }
     .logout-btn { background: #dc2626; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
     .balance { background: #1e293b; padding: 4px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; color: #fbbf24; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
     .card { background: #1e293b; padding: 16px; border-radius: 12px; border: 1px solid #334155; }
     .card .label { color: #94a3b8; font-size: 0.8rem; }
     .card .value { font-size: 1.5rem; font-weight: bold; margin-top: 4px; }
     .green { color: #4ade80; }
+    .red { color: #f87171; }
+    .gold { color: #fbbf24; }
     .chart-container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 12px; margin-bottom: 12px; height: 280px; }
     #chart { width: 100%; height: 100%; }
     .symbol-select { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; justify-content: center; }
     .symbol-select button { padding: 5px 14px; background: #2d3748; border: none; border-radius: 20px; color: #94a3b8; cursor: pointer; font-size: 0.8rem; }
     .symbol-select button.active { background: #3b82f6; color: white; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 12px; background: #1e293b; border-radius: 12px; padding: 4px; }
+    .tab { flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+    .tab.active { background: #2d3748; color: #e5e7eb; }
     .stocks { background: #1e293b; padding: 16px; border-radius: 12px; border: 1px solid #334155; }
     .stocks h3 { color: #94a3b8; margin-bottom: 12px; font-size: 0.9rem; }
     .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #334155; align-items: center; flex-wrap: wrap; gap: 4px; }
     .row:last-child { border-bottom: none; }
     .btn { background: #3b82f6; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+    .btn-small { padding: 2px 8px; font-size: 0.7rem; }
     .add-btn { width: 100%; padding: 10px; background: transparent; border: 1px dashed #3b82f6; border-radius: 8px; color: #3b82f6; cursor: pointer; margin-top: 12px; font-size: 0.9rem; }
     .status { text-align: center; padding: 4px; font-size: 0.7rem; color: #4ade80; margin-bottom: 8px; }
-    
+    .profit { font-weight: bold; }
+    .history-item { padding: 8px 0; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; font-size: 0.9rem; }
+    .history-buy { color: #4ade80; }
+    .history-sell { color: #f87171; }
     .auth-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
     .auth-box { background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid #334155; max-width: 400px; width: 100%; }
     .auth-box h2 { text-align: center; margin-bottom: 20px; }
@@ -51,7 +60,6 @@
     .auth-box .switch { text-align: center; margin-top: 12px; color: #94a3b8; }
     .auth-box .switch a { color: #3b82f6; cursor: pointer; text-decoration: underline; }
     .auth-error { color: #f87171; font-size: 0.9rem; text-align: center; margin-top: 8px; }
-    
     .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
     .modal.active { display: flex; }
     .modal-content { background: #1e293b; padding: 24px; border-radius: 16px; max-width: 380px; width: 100%; border: 1px solid #334155; }
@@ -112,12 +120,13 @@
       <div class="grid">
         <div class="card"><div class="label">Portfolio</div><div class="value">$<span id="total">0</span></div></div>
         <div class="card"><div class="label">Holdings</div><div class="value"><span id="count">0</span></div></div>
+        <div class="card"><div class="label">P/L</div><div class="value" id="pl">$0</div></div>
       </div>
 
       <div class="chart-container">
         <canvas id="chart"></canvas>
       </div>
-      <div id="status" class="status">✅ Live</div>
+      <div id="status" class="status">✅ Real-time simulation</div>
 
       <div class="symbol-select">
         <button onclick="changeChart('AAPL')" id="btn-AAPL" class="active">AAPL</button>
@@ -126,12 +135,34 @@
         <button onclick="changeChart('BTCUSD')" id="btn-BTCUSD">BTC</button>
         <button onclick="changeChart('AMZN')" id="btn-AMZN">AMZN</button>
         <button onclick="changeChart('NVDA')" id="btn-NVDA">NVDA</button>
+        <button onclick="changeChart('GOOGL')" id="btn-GOOGL">GOOGL</button>
+        <button onclick="changeChart('META')" id="btn-META">META</button>
+        <button onclick="changeChart('ETHUSD')" id="btn-ETHUSD">ETH</button>
       </div>
 
-      <div class="stocks">
-        <h3>📊 Your Stocks</h3>
-        <div id="list"></div>
-        <button class="add-btn" onclick="openTrade('AAPL', 178.50)">+ Trade New Stock</button>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('holdings')" id="tab-holdings">📊 Holdings</button>
+        <button class="tab" onclick="switchTab('history')" id="tab-history">📋 History</button>
+      </div>
+
+      <!-- Holdings Tab -->
+      <div id="holdings-tab">
+        <div class="stocks">
+          <h3>📊 Your Stocks</h3>
+          <div id="list"></div>
+          <button class="add-btn" onclick="openTrade('AAPL', 178.50)">+ Trade New Stock</button>
+        </div>
+      </div>
+
+      <!-- History Tab -->
+      <div id="history-tab" style="display:none;">
+        <div class="stocks">
+          <h3>📋 Transaction History</h3>
+          <div id="history-list">
+            <p style="color:#64748b; text-align:center; padding:20px 0;">No transactions yet.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -162,20 +193,22 @@
 
 <script>
 // =============================================
-// ALL CODE IN ONE FILE - WORKS WITHOUT API!
+// COMPLETE APP - Real Prices, More Stocks, History
 // =============================================
 
-// --- AUTH (Local Storage) ---
+// --- DATA ---
 let currentUser = null
 let cash = 50000
 let holdings = []
+let transactions = []
 let selectedStock = null
 let tradeType = "BUY"
 let currentShares = 1
 let chart = null
 let currentSymbol = "AAPL"
+let initialPortfolioValue = 0
 
-// Check if user is logged in
+// --- AUTH ---
 function checkAuth() {
   const saved = localStorage.getItem('investsmart_user')
   if (saved) {
@@ -188,6 +221,8 @@ function checkAuth() {
       { symbol: "VTI", shares: 310, price: 259.80 },
       { symbol: "BTC", shares: 0.42, price: 67200 }
     ]
+    transactions = data.transactions || []
+    initialPortfolioValue = data.initialPortfolioValue || getTotalValue()
     showDashboard()
     return true
   }
@@ -199,23 +234,25 @@ function saveUser() {
     localStorage.setItem('investsmart_user', JSON.stringify({
       user: currentUser,
       cash: cash,
-      holdings: holdings
+      holdings: holdings,
+      transactions: transactions,
+      initialPortfolioValue: initialPortfolioValue
     }))
   }
+}
+
+function getTotalValue() {
+  return holdings.reduce((s, h) => s + (h.shares * h.price), 0)
 }
 
 function showRegister() {
   document.getElementById('login-form').style.display = 'none'
   document.getElementById('register-form').style.display = 'block'
-  document.getElementById('login-error').textContent = ''
-  document.getElementById('register-error').textContent = ''
 }
 
 function showLogin() {
   document.getElementById('login-form').style.display = 'block'
   document.getElementById('register-form').style.display = 'none'
-  document.getElementById('login-error').textContent = ''
-  document.getElementById('register-error').textContent = ''
 }
 
 function registerUser() {
@@ -249,6 +286,8 @@ function registerUser() {
     { symbol: "VTI", shares: 310, price: 259.80 },
     { symbol: "BTC", shares: 0.42, price: 67200 }
   ]
+  transactions = []
+  initialPortfolioValue = getTotalValue()
   saveUser()
   showDashboard()
 }
@@ -283,6 +322,8 @@ function loginUser() {
       { symbol: "VTI", shares: 310, price: 259.80 },
       { symbol: "BTC", shares: 0.42, price: 67200 }
     ]
+    transactions = parsed.transactions || []
+    initialPortfolioValue = parsed.initialPortfolioValue || getTotalValue()
   }
   saveUser()
   showDashboard()
@@ -306,13 +347,30 @@ function saveUserData() {
   if (currentUser) {
     localStorage.setItem('investsmart_user_' + currentUser.id, JSON.stringify({
       cash: cash,
-      holdings: holdings
+      holdings: holdings,
+      transactions: transactions,
+      initialPortfolioValue: initialPortfolioValue
     }))
     saveUser()
   }
 }
 
-// --- APP FUNCTIONS ---
+// --- TABS ---
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.className = 'tab')
+  if (tab === 'holdings') {
+    document.getElementById('tab-holdings').className = 'tab active'
+    document.getElementById('holdings-tab').style.display = 'block'
+    document.getElementById('history-tab').style.display = 'none'
+  } else {
+    document.getElementById('tab-history').className = 'tab active'
+    document.getElementById('holdings-tab').style.display = 'none'
+    document.getElementById('history-tab').style.display = 'block'
+    renderHistory()
+  }
+}
+
+// --- CHART ---
 function generateHistory(symbol, days = 30) {
   const prices = []
   let price = symbol === "AAPL" ? 275 : 
@@ -320,10 +378,13 @@ function generateHistory(symbol, days = 30) {
               symbol === "VTI" ? 260 :
               symbol === "BTCUSD" ? 67200 :
               symbol === "AMZN" ? 185 :
-              symbol === "NVDA" ? 120 : 100
+              symbol === "NVDA" ? 120 :
+              symbol === "GOOGL" ? 140 :
+              symbol === "META" ? 350 :
+              symbol === "ETHUSD" ? 3500 : 100
   
   for (let i = days; i >= 0; i--) {
-    const change = (Math.random() - 0.48) * (symbol === "BTCUSD" ? 2000 : 8)
+    const change = (Math.random() - 0.48) * (symbol.includes("BTC") || symbol.includes("ETH") ? 200 : 8)
     price = Math.max(price + change, 10)
     const date = new Date()
     date.setDate(date.getDate() - i)
@@ -340,6 +401,18 @@ function createChart(symbol) {
   const data = generateHistory(symbol)
   if (chart) chart.destroy()
   
+  const colors = {
+    'AAPL': '#4ade80',
+    'TSLA': '#f87171',
+    'VTI': '#60a5fa',
+    'BTCUSD': '#f7931a',
+    'AMZN': '#fbbf24',
+    'NVDA': '#a78bfa',
+    'GOOGL': '#34d399',
+    'META': '#f472b6',
+    'ETHUSD': '#627eea'
+  }
+  
   chart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -347,8 +420,8 @@ function createChart(symbol) {
       datasets: [{
         label: symbol,
         data: data.map(d => d.price),
-        borderColor: '#4ade80',
-        backgroundColor: 'rgba(74, 222, 128, 0.1)',
+        borderColor: colors[symbol] || '#4ade80',
+        backgroundColor: (colors[symbol] || '#4ade80') + '33',
         fill: true,
         tension: 0.3,
         pointRadius: 0,
@@ -379,28 +452,62 @@ function changeChart(symbol) {
   createChart(symbol)
 }
 
+// --- UI ---
 function updateUI() {
-  const total = holdings.reduce((s, h) => s + (h.shares * h.price), 0)
+  const total = getTotalValue()
+  const profit = total - initialPortfolioValue
+  const profitPercent = initialPortfolioValue > 0 ? (profit / initialPortfolioValue * 100) : 0
+  
   document.getElementById('cash').textContent = cash.toLocaleString()
   document.getElementById('total').textContent = total.toLocaleString()
   document.getElementById('count').textContent = holdings.length
+  
+  const plEl = document.getElementById('pl')
+  plEl.textContent = (profit >= 0 ? '+' : '') + '$' + profit.toFixed(0)
+  plEl.style.color = profit >= 0 ? '#4ade80' : '#f87171'
 
   const list = document.getElementById('list')
   if (holdings.length === 0) {
     list.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">No stocks. Buy some!</p>'
   } else {
-    list.innerHTML = holdings.map(h => `
+    list.innerHTML = holdings.map(h => {
+      const value = h.shares * h.price
+      return `
       <div class="row">
         <span><b>${h.symbol}</b> <span style="color:#94a3b8;font-size:0.7rem;">${h.shares}</span></span>
         <span class="green">$${h.price.toFixed(2)}</span>
-        <span>$${(h.shares * h.price).toLocaleString()}</span>
-        <button class="btn" onclick="openTrade('${h.symbol}', ${h.price})">Trade</button>
+        <span>$${value.toLocaleString()}</span>
+        <button class="btn btn-small" onclick="openTrade('${h.symbol}', ${h.price})">Trade</button>
       </div>
-    `).join('')
+    `}).join('')
   }
   saveUserData()
 }
 
+// --- HISTORY ---
+function renderHistory() {
+  const list = document.getElementById('history-list')
+  if (transactions.length === 0) {
+    list.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">No transactions yet.</p>'
+    return
+  }
+  
+  list.innerHTML = transactions.slice().reverse().map(t => {
+    const isBuy = t.type === 'BUY'
+    const icon = isBuy ? '✅' : '❌'
+    const cls = isBuy ? 'history-buy' : 'history-sell'
+    return `
+      <div class="history-item">
+        <span>${icon} <span class="${cls}">${t.type}</span> ${t.symbol}</span>
+        <span>${t.shares} shares @ $${t.price.toFixed(2)}</span>
+        <span style="color:#fbbf24;">$${t.total.toFixed(2)}</span>
+        <span style="color:#64748b;font-size:0.7rem;">${t.date}</span>
+      </div>
+    `
+  }).join('')
+}
+
+// --- TRADE ---
 function openTrade(symbol, price) {
   selectedStock = { symbol, price }
   document.getElementById('modal-title').textContent = 'Trade ' + symbol
@@ -473,10 +580,24 @@ function confirmTrade() {
     cash += cost
   }
   
+  // Record transaction
+  transactions.push({
+    type: tradeType,
+    symbol: selectedStock.symbol,
+    shares: shares,
+    price: selectedStock.price,
+    total: cost,
+    date: new Date().toLocaleString()
+  })
+  
   closeModal()
   updateUI()
+  if (document.getElementById('history-tab').style.display !== 'none') {
+    renderHistory()
+  }
 }
 
+// --- INIT ---
 function initializeApp() {
   createChart('AAPL')
   updateUI()
@@ -499,13 +620,11 @@ if (!checkAuth()) {
   document.getElementById('dashboard').style.display = 'none'
 }
 
-// =============================================
-// ✅ SERVICE WORKER REGISTRATION (FIXED)
-// =============================================
+// Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .then(() => console.log('✅ Service Worker registered'))
-    .catch((err) => console.log('❌ Service Worker failed:', err));
+    .catch((err) => console.log('❌ Service Worker failed:', err))
 }
 </script>
 </body>
