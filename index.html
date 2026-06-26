@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="InvestSmart">
   <meta name="theme-color" content="#0b1120">
   <title>InvestSmart</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
     body { background: #0b1120; color: #e5e7eb; padding: 16px; min-height: 100vh; }
@@ -28,7 +28,7 @@
     .green { color: #4ade80; }
     .red { color: #f87171; }
     .gold { color: #fbbf24; }
-    .chart-container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 12px; margin-bottom: 12px; height: 280px; }
+    .chart-container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 12px; margin-bottom: 12px; height: 300px; }
     #chart { width: 100%; height: 100%; }
     .symbol-select { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; justify-content: center; }
     .symbol-select button { padding: 5px 14px; background: #2d3748; border: none; border-radius: 20px; color: #94a3b8; cursor: pointer; font-size: 0.8rem; }
@@ -44,7 +44,6 @@
     .btn-small { padding: 2px 8px; font-size: 0.7rem; }
     .add-btn { width: 100%; padding: 10px; background: transparent; border: 1px dashed #3b82f6; border-radius: 8px; color: #3b82f6; cursor: pointer; margin-top: 12px; font-size: 0.9rem; }
     .status { text-align: center; padding: 4px; font-size: 0.7rem; color: #4ade80; margin-bottom: 8px; }
-    .profit { font-weight: bold; }
     .history-item { padding: 8px 0; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; font-size: 0.9rem; flex-wrap: wrap; gap: 4px; }
     .history-buy { color: #4ade80; }
     .history-sell { color: #f87171; }
@@ -81,7 +80,6 @@
       <div class="auth-box">
         <h2 class="logo" style="font-size:2rem; text-align:center;">📊 InvestSmart</h2>
         <p style="text-align:center; color:#94a3b8; margin-bottom:20px;">Your Investment Dashboard</p>
-        
         <div id="login-form">
           <input type="email" id="login-email" placeholder="Email" />
           <input type="password" id="login-password" placeholder="Password" />
@@ -89,7 +87,6 @@
           <button onclick="loginUser()">Sign In</button>
           <div class="switch">Don't have an account? <a onclick="showRegister()">Sign Up</a></div>
         </div>
-        
         <div id="register-form" style="display:none;">
           <input type="text" id="register-name" placeholder="Full Name" />
           <input type="email" id="register-email" placeholder="Email" />
@@ -121,9 +118,9 @@
       </div>
 
       <div class="chart-container">
-        <canvas id="chart"></canvas>
+        <div id="chart"></div>
       </div>
-      <div id="status" class="status">✅ Live</div>
+      <div id="status" class="status">✅ Live Candlestick Chart</div>
 
       <div class="symbol-select">
         <button onclick="changeChart('AAPL')" id="btn-AAPL" class="active">AAPL</button>
@@ -153,9 +150,7 @@
       <div id="history-tab" style="display:none;">
         <div class="stocks">
           <h3>📋 Transaction History</h3>
-          <div id="history-list">
-            <p style="color:#64748b; text-align:center; padding:20px 0;">No transactions yet.</p>
-          </div>
+          <div id="history-list"><p style="color:#64748b; text-align:center; padding:20px 0;">No transactions yet.</p></div>
         </div>
       </div>
     </div>
@@ -187,38 +182,39 @@
 
 <script>
 // =============================================
-// COMPLETE APP - Real Prices, More Stocks, History
+// COMPLETE INVESTMENT APP WITH CANDLESTICK CHART
 // =============================================
 
-let currentUser = null
-let cash = 50000
-let holdings = []
-let transactions = []
-let selectedStock = null
-let tradeType = "BUY"
-let currentShares = 1
-let chart = null
-let currentSymbol = "AAPL"
-let initialPortfolioValue = 0
+let currentUser = null;
+let cash = 50000;
+let holdings = [];
+let transactions = [];
+let selectedStock = null;
+let tradeType = "BUY";
+let currentShares = 1;
+let chartInstance = null;
+let currentSymbol = "AAPL";
+let initialPortfolioValue = 0;
 
+// --- AUTH ---
 function checkAuth() {
-  const saved = localStorage.getItem('investsmart_user')
+  const saved = localStorage.getItem('investsmart_user');
   if (saved) {
-    const data = JSON.parse(saved)
-    currentUser = data.user
-    cash = data.cash || 50000
+    const data = JSON.parse(saved);
+    currentUser = data.user;
+    cash = data.cash || 50000;
     holdings = data.holdings || [
       { symbol: "AAPL", shares: 120, price: 178.50 },
       { symbol: "TSLA", shares: 45, price: 245.30 },
       { symbol: "VTI", shares: 310, price: 259.80 },
       { symbol: "BTC", shares: 0.42, price: 67200 }
-    ]
-    transactions = data.transactions || []
-    initialPortfolioValue = data.initialPortfolioValue || getTotalValue()
-    showDashboard()
-    return true
+    ];
+    transactions = data.transactions || [];
+    initialPortfolioValue = data.initialPortfolioValue || getTotalValue();
+    showDashboard();
+    return true;
   }
-  return false
+  return false;
 }
 
 function saveUser() {
@@ -229,110 +225,101 @@ function saveUser() {
       holdings: holdings,
       transactions: transactions,
       initialPortfolioValue: initialPortfolioValue
-    }))
+    }));
   }
 }
 
 function getTotalValue() {
-  return holdings.reduce((s, h) => s + (h.shares * h.price), 0)
+  return holdings.reduce((s, h) => s + (h.shares * h.price), 0);
 }
 
 function showRegister() {
-  document.getElementById('login-form').style.display = 'none'
-  document.getElementById('register-form').style.display = 'block'
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'block';
 }
 
 function showLogin() {
-  document.getElementById('login-form').style.display = 'block'
-  document.getElementById('register-form').style.display = 'none'
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('register-form').style.display = 'none';
 }
 
 function registerUser() {
-  const name = document.getElementById('register-name').value
-  const email = document.getElementById('register-email').value
-  const password = document.getElementById('register-password').value
-  const errorEl = document.getElementById('register-error')
-  
+  const name = document.getElementById('register-name').value;
+  const email = document.getElementById('register-email').value;
+  const password = document.getElementById('register-password').value;
+  const errorEl = document.getElementById('register-error');
   if (!name || !email || !password) {
-    errorEl.textContent = 'Please fill in all fields'
-    return
+    errorEl.textContent = 'Please fill in all fields';
+    return;
   }
-  
-  const saved = localStorage.getItem('investsmart_users')
-  let users = saved ? JSON.parse(saved) : []
-  
+  const saved = localStorage.getItem('investsmart_users');
+  let users = saved ? JSON.parse(saved) : [];
   if (users.find(u => u.email === email)) {
-    errorEl.textContent = 'User already exists!'
-    return
+    errorEl.textContent = 'User already exists!';
+    return;
   }
-  
-  const user = { id: Date.now(), name, email, password }
-  users.push(user)
-  localStorage.setItem('investsmart_users', JSON.stringify(users))
-  
-  currentUser = user
-  cash = 50000
+  const user = { id: Date.now(), name, email, password };
+  users.push(user);
+  localStorage.setItem('investsmart_users', JSON.stringify(users));
+  currentUser = user;
+  cash = 50000;
   holdings = [
     { symbol: "AAPL", shares: 120, price: 178.50 },
     { symbol: "TSLA", shares: 45, price: 245.30 },
     { symbol: "VTI", shares: 310, price: 259.80 },
     { symbol: "BTC", shares: 0.42, price: 67200 }
-  ]
-  transactions = []
-  initialPortfolioValue = getTotalValue()
-  saveUser()
-  showDashboard()
+  ];
+  transactions = [];
+  initialPortfolioValue = getTotalValue();
+  saveUser();
+  showDashboard();
 }
 
 function loginUser() {
-  const email = document.getElementById('login-email').value
-  const password = document.getElementById('login-password').value
-  const errorEl = document.getElementById('login-error')
-  
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
   if (!email || !password) {
-    errorEl.textContent = 'Please fill in all fields'
-    return
+    errorEl.textContent = 'Please fill in all fields';
+    return;
   }
-  
-  const saved = localStorage.getItem('investsmart_users')
-  const users = saved ? JSON.parse(saved) : []
-  const user = users.find(u => u.email === email && u.password === password)
-  
+  const saved = localStorage.getItem('investsmart_users');
+  const users = saved ? JSON.parse(saved) : [];
+  const user = users.find(u => u.email === email && u.password === password);
   if (!user) {
-    errorEl.textContent = 'Invalid email or password'
-    return
+    errorEl.textContent = 'Invalid email or password';
+    return;
   }
-  
-  currentUser = user
-  const data = localStorage.getItem('investsmart_user_' + user.id)
+  currentUser = user;
+  const data = localStorage.getItem('investsmart_user_' + user.id);
   if (data) {
-    const parsed = JSON.parse(data)
-    cash = parsed.cash || 50000
+    const parsed = JSON.parse(data);
+    cash = parsed.cash || 50000;
     holdings = parsed.holdings || [
       { symbol: "AAPL", shares: 120, price: 178.50 },
       { symbol: "TSLA", shares: 45, price: 245.30 },
       { symbol: "VTI", shares: 310, price: 259.80 },
       { symbol: "BTC", shares: 0.42, price: 67200 }
-    ]
-    transactions = parsed.transactions || []
-    initialPortfolioValue = parsed.initialPortfolioValue || getTotalValue()
+    ];
+    transactions = parsed.transactions || [];
+    initialPortfolioValue = parsed.initialPortfolioValue || getTotalValue();
   }
-  saveUser()
-  showDashboard()
+  saveUser();
+  showDashboard();
 }
 
 function logoutUser() {
-  currentUser = null
-  localStorage.removeItem('investsmart_user')
-  document.getElementById('auth-screen').style.display = 'block'
-  document.getElementById('dashboard').style.display = 'none'
+  currentUser = null;
+  localStorage.removeItem('investsmart_user');
+  document.getElementById('auth-screen').style.display = 'block';
+  document.getElementById('dashboard').style.display = 'none';
 }
 
 function showDashboard() {
-  document.getElementById('auth-screen').style.display = 'none'
-  document.getElementById('dashboard').style.display = 'block'
-  document.getElementById('user-name').textContent = currentUser.name
-  initializeApp()
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('user-name').textContent = currentUser.name;
+  initializeApp();
 }
 
 function saveUserData() {
@@ -342,28 +329,30 @@ function saveUserData() {
       holdings: holdings,
       transactions: transactions,
       initialPortfolioValue: initialPortfolioValue
-    }))
-    saveUser()
+    }));
+    saveUser();
   }
 }
 
+// --- TABS ---
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.className = 'tab')
+  document.querySelectorAll('.tab').forEach(t => t.className = 'tab');
   if (tab === 'holdings') {
-    document.getElementById('tab-holdings').className = 'tab active'
-    document.getElementById('holdings-tab').style.display = 'block'
-    document.getElementById('history-tab').style.display = 'none'
+    document.getElementById('tab-holdings').className = 'tab active';
+    document.getElementById('holdings-tab').style.display = 'block';
+    document.getElementById('history-tab').style.display = 'none';
   } else {
-    document.getElementById('tab-history').className = 'tab active'
-    document.getElementById('holdings-tab').style.display = 'none'
-    document.getElementById('history-tab').style.display = 'block'
-    renderHistory()
+    document.getElementById('tab-history').className = 'tab active';
+    document.getElementById('holdings-tab').style.display = 'none';
+    document.getElementById('history-tab').style.display = 'block';
+    renderHistory();
   }
 }
 
-function generateHistory(symbol, days = 30) {
-  const prices = []
-  let price = symbol === "AAPL" ? 275 : 
+// --- CANDLESTICK CHART ---
+function generateCandles(symbol, count = 30) {
+  const data = [];
+  let price = symbol === "AAPL" ? 275 :
               symbol === "TSLA" ? 245 :
               symbol === "VTI" ? 260 :
               symbol === "BTCUSD" ? 67200 :
@@ -371,118 +360,123 @@ function generateHistory(symbol, days = 30) {
               symbol === "NVDA" ? 120 :
               symbol === "GOOGL" ? 140 :
               symbol === "META" ? 350 :
-              symbol === "ETHUSD" ? 3500 : 100
-  
-  for (let i = days; i >= 0; i--) {
-    const change = (Math.random() - 0.48) * (symbol.includes("BTC") || symbol.includes("ETH") ? 200 : 8)
-    price = Math.max(price + change, 10)
-    const date = new Date()
-    date.setDate(date.getDate() - i)
-    prices.push({
-      date: date.toLocaleDateString(),
-      price: Math.round(price * 100) / 100
-    })
+              symbol === "ETHUSD" ? 3500 : 100;
+  const now = new Date();
+  for (let i = count; i >= 0; i--) {
+    const change = (Math.random() - 0.48) * (symbol.includes("BTC") || symbol.includes("ETH") ? 200 : 6);
+    const open = price;
+    const close = Math.max(open + change, 10);
+    const high = Math.max(open, close) + Math.random() * 10;
+    const low = Math.min(open, close) - Math.random() * 10;
+    price = close;
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    data.push({
+      time: Math.floor(date.getTime() / 1000),
+      open: Math.round(open * 100) / 100,
+      high: Math.round(high * 100) / 100,
+      low: Math.round(low * 100) / 100,
+      close: Math.round(close * 100) / 100,
+    });
   }
-  return prices
+  return data;
 }
 
 function createChart(symbol) {
-  const ctx = document.getElementById('chart').getContext('2d')
-  const data = generateHistory(symbol)
-  if (chart) chart.destroy()
-  
-  const colors = {
-    'AAPL': '#4ade80',
-    'TSLA': '#f87171',
-    'VTI': '#60a5fa',
-    'BTCUSD': '#f7931a',
-    'AMZN': '#fbbf24',
-    'NVDA': '#a78bfa',
-    'GOOGL': '#34d399',
-    'META': '#f472b6',
-    'ETHUSD': '#627eea'
-  }
-  
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: data.map(d => d.date),
-      datasets: [{
-        label: symbol,
-        data: data.map(d => d.price),
-        borderColor: colors[symbol] || '#4ade80',
-        backgroundColor: (colors[symbol] || '#4ade80') + '33',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 0,
-        borderWidth: 2
-      }]
+  const container = document.getElementById('chart');
+  container.innerHTML = '';
+  const chart = LightweightCharts.createChart(container, {
+    width: container.clientWidth || 400,
+    height: 250,
+    layout: {
+      background: { color: '#1e293b' },
+      textColor: '#94a3b8',
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#94a3b8', font: { size: 10 } } },
-        tooltip: { callbacks: { label: function(context) { return '$' + context.parsed.y.toFixed(2) } } }
-      },
-      scales: {
-        x: { grid: { color: 'rgba(148, 163, 184, 0.1)' }, ticks: { color: '#94a3b8', maxTicksLimit: 6, font: { size: 8 } } },
-        y: { grid: { color: 'rgba(148, 163, 184, 0.1)' }, ticks: { color: '#94a3b8', callback: function(value) { return '$' + value.toFixed(0) } } }
-      },
-      animation: { duration: 800 }
-    }
-  })
-  updateUI()
+    grid: {
+      vertLines: { color: '#334155' },
+      horzLines: { color: '#334155' },
+    },
+    priceScale: {
+      borderColor: '#334155',
+      autoScale: true,
+    },
+    timeScale: {
+      borderColor: '#334155',
+      timeVisible: true,
+      secondsVisible: false,
+    },
+  });
+  const data = generateCandles(symbol, 30);
+  const candleSeries = chart.addCandlestickSeries({
+    upColor: '#4ade80',
+    downColor: '#f87171',
+    borderVisible: false,
+    wickUpColor: '#4ade80',
+    wickDownColor: '#f87171',
+  });
+  candleSeries.setData(data);
+  const volumeSeries = chart.addHistogramSeries({
+    color: '#3b82f6',
+    priceFormat: { type: 'volume' },
+    priceScaleId: '',
+  });
+  const volumeData = data.map(d => ({
+    time: d.time,
+    value: Math.random() * 1000000 + 500000,
+    color: d.close > d.open ? '#4ade8033' : '#f8717133',
+  }));
+  volumeSeries.setData(volumeData);
+  chartInstance = chart;
+  updateUI();
 }
 
 function changeChart(symbol) {
-  currentSymbol = symbol
-  document.querySelectorAll('.symbol-select button').forEach(btn => { btn.className = '' })
-  document.getElementById('btn-' + symbol).className = 'active'
-  createChart(symbol)
+  currentSymbol = symbol;
+  document.querySelectorAll('.symbol-select button').forEach(btn => { btn.className = ''; });
+  document.getElementById('btn-' + symbol).className = 'active';
+  if (chartInstance) {
+    chartInstance.remove();
+    chartInstance = null;
+  }
+  createChart(symbol);
 }
 
+// --- UI ---
 function updateUI() {
-  const total = getTotalValue()
-  const profit = total - initialPortfolioValue
-  
-  document.getElementById('cash').textContent = cash.toLocaleString()
-  document.getElementById('total').textContent = total.toLocaleString()
-  document.getElementById('count').textContent = holdings.length
-  
-  const plEl = document.getElementById('pl')
-  plEl.textContent = (profit >= 0 ? '+' : '') + '$' + profit.toFixed(0)
-  plEl.style.color = profit >= 0 ? '#4ade80' : '#f87171'
-
-  const list = document.getElementById('list')
+  const total = getTotalValue();
+  const profit = total - initialPortfolioValue;
+  document.getElementById('cash').textContent = cash.toLocaleString();
+  document.getElementById('total').textContent = total.toLocaleString();
+  document.getElementById('count').textContent = holdings.length;
+  const plEl = document.getElementById('pl');
+  plEl.textContent = (profit >= 0 ? '+' : '') + '$' + profit.toFixed(0);
+  plEl.style.color = profit >= 0 ? '#4ade80' : '#f87171';
+  const list = document.getElementById('list');
   if (holdings.length === 0) {
-    list.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">No stocks. Buy some!</p>'
+    list.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">No stocks. Buy some!</p>';
   } else {
-    list.innerHTML = holdings.map(h => {
-      const value = h.shares * h.price
-      return `
+    list.innerHTML = holdings.map(h => `
       <div class="row">
         <span><b>${h.symbol}</b> <span style="color:#94a3b8;font-size:0.7rem;">${h.shares}</span></span>
         <span class="green">$${h.price.toFixed(2)}</span>
-        <span>$${value.toLocaleString()}</span>
+        <span>$${(h.shares * h.price).toLocaleString()}</span>
         <button class="btn btn-small" onclick="openTrade('${h.symbol}', ${h.price})">Trade</button>
       </div>
-    `}).join('')
+    `).join('');
   }
-  saveUserData()
+  saveUserData();
 }
 
 function renderHistory() {
-  const list = document.getElementById('history-list')
+  const list = document.getElementById('history-list');
   if (transactions.length === 0) {
-    list.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">No transactions yet.</p>'
-    return
+    list.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px 0;">No transactions yet.</p>';
+    return;
   }
-  
   list.innerHTML = transactions.slice().reverse().map(t => {
-    const isBuy = t.type === 'BUY'
-    const icon = isBuy ? '✅' : '❌'
-    const cls = isBuy ? 'history-buy' : 'history-sell'
+    const isBuy = t.type === 'BUY';
+    const icon = isBuy ? '✅' : '❌';
+    const cls = isBuy ? 'history-buy' : 'history-sell';
     return `
       <div class="history-item">
         <span>${icon} <span class="${cls}">${t.type}</span> ${t.symbol}</span>
@@ -490,82 +484,80 @@ function renderHistory() {
         <span style="color:#fbbf24;">$${t.total.toFixed(2)}</span>
         <span style="color:#64748b;font-size:0.7rem;">${t.date}</span>
       </div>
-    `
-  }).join('')
+    `;
+  }).join('');
 }
 
+// --- TRADE ---
 function openTrade(symbol, price) {
-  selectedStock = { symbol, price }
-  document.getElementById('modal-title').textContent = 'Trade ' + symbol
-  document.getElementById('modal-price').textContent = price
-  document.getElementById('modal-shares').value = 1
-  currentShares = 1
-  tradeType = "BUY"
-  document.getElementById('buy-tab').style.background = '#22c55e'
-  document.getElementById('sell-tab').style.background = '#334155'
-  document.getElementById('confirm-btn').textContent = 'Buy ' + symbol
-  document.getElementById('confirm-btn').style.background = '#22c55e'
-  updateModalTotal()
-  document.getElementById('modal').classList.add('active')
+  selectedStock = { symbol, price };
+  document.getElementById('modal-title').textContent = 'Trade ' + symbol;
+  document.getElementById('modal-price').textContent = price;
+  document.getElementById('modal-shares').value = 1;
+  currentShares = 1;
+  tradeType = "BUY";
+  document.getElementById('buy-tab').style.background = '#22c55e';
+  document.getElementById('sell-tab').style.background = '#334155';
+  document.getElementById('confirm-btn').textContent = 'Buy ' + symbol;
+  document.getElementById('confirm-btn').style.background = '#22c55e';
+  updateModalTotal();
+  document.getElementById('modal').classList.add('active');
 }
 
 function setTradeType(type) {
-  tradeType = type
+  tradeType = type;
   if (type === 'BUY') {
-    document.getElementById('buy-tab').style.background = '#22c55e'
-    document.getElementById('sell-tab').style.background = '#334155'
-    document.getElementById('confirm-btn').textContent = 'Buy ' + (selectedStock ? selectedStock.symbol : '')
-    document.getElementById('confirm-btn').style.background = '#22c55e'
+    document.getElementById('buy-tab').style.background = '#22c55e';
+    document.getElementById('sell-tab').style.background = '#334155';
+    document.getElementById('confirm-btn').textContent = 'Buy ' + (selectedStock ? selectedStock.symbol : '');
+    document.getElementById('confirm-btn').style.background = '#22c55e';
   } else {
-    document.getElementById('buy-tab').style.background = '#334155'
-    document.getElementById('sell-tab').style.background = '#ef4444'
-    document.getElementById('confirm-btn').textContent = 'Sell ' + (selectedStock ? selectedStock.symbol : '')
-    document.getElementById('confirm-btn').style.background = '#ef4444'
+    document.getElementById('buy-tab').style.background = '#334155';
+    document.getElementById('sell-tab').style.background = '#ef4444';
+    document.getElementById('confirm-btn').textContent = 'Sell ' + (selectedStock ? selectedStock.symbol : '');
+    document.getElementById('confirm-btn').style.background = '#ef4444';
   }
 }
 
 function setShares(val) {
-  document.getElementById('modal-shares').value = val
-  currentShares = val
-  updateModalTotal()
+  document.getElementById('modal-shares').value = val;
+  currentShares = val;
+  updateModalTotal();
 }
 
 function updateModalTotal() {
-  const shares = parseFloat(document.getElementById('modal-shares').value) || 0
-  const total = selectedStock ? selectedStock.price * shares : 0
-  document.getElementById('modal-total').textContent = total.toLocaleString()
+  const shares = parseFloat(document.getElementById('modal-shares').value) || 0;
+  const total = selectedStock ? selectedStock.price * shares : 0;
+  document.getElementById('modal-total').textContent = total.toLocaleString();
 }
 
 function closeModal() {
-  document.getElementById('modal').classList.remove('active')
+  document.getElementById('modal').classList.remove('active');
 }
 
 function confirmTrade() {
-  if (!selectedStock) return
-  const shares = parseFloat(document.getElementById('modal-shares').value) || 0
-  if (shares <= 0) { alert('Enter valid shares!'); return }
-  
-  const cost = selectedStock.price * shares
-  
+  if (!selectedStock) return;
+  const shares = parseFloat(document.getElementById('modal-shares').value) || 0;
+  if (shares <= 0) { alert('Enter valid shares!'); return; }
+  const cost = selectedStock.price * shares;
   if (tradeType === 'BUY') {
-    if (cost > cash) { alert('Not enough cash!'); return }
-    const existing = holdings.find(h => h.symbol === selectedStock.symbol)
+    if (cost > cash) { alert('Not enough cash!'); return; }
+    const existing = holdings.find(h => h.symbol === selectedStock.symbol);
     if (existing) {
-      existing.shares += shares
+      existing.shares += shares;
     } else {
-      holdings.push({ ...selectedStock, shares: shares })
+      holdings.push({ ...selectedStock, shares: shares });
     }
-    cash -= cost
+    cash -= cost;
   } else {
-    const existing = holdings.find(h => h.symbol === selectedStock.symbol)
-    if (!existing || existing.shares < shares) { alert('Not enough shares!'); return }
-    existing.shares -= shares
+    const existing = holdings.find(h => h.symbol === selectedStock.symbol);
+    if (!existing || existing.shares < shares) { alert('Not enough shares!'); return; }
+    existing.shares -= shares;
     if (existing.shares === 0) {
-      holdings = holdings.filter(h => h.symbol !== selectedStock.symbol)
+      holdings = holdings.filter(h => h.symbol !== selectedStock.symbol);
     }
-    cash += cost
+    cash += cost;
   }
-  
   transactions.push({
     type: tradeType,
     symbol: selectedStock.symbol,
@@ -573,40 +565,56 @@ function confirmTrade() {
     price: selectedStock.price,
     total: cost,
     date: new Date().toLocaleString()
-  })
-  
-  closeModal()
-  updateUI()
+  });
+  closeModal();
+  updateUI();
   if (document.getElementById('history-tab').style.display !== 'none') {
-    renderHistory()
+    renderHistory();
   }
 }
 
+// --- INIT ---
 function initializeApp() {
-  createChart('AAPL')
-  updateUI()
-  
+  createChart('AAPL');
+  updateUI();
+  // Auto-update chart every 3 seconds
   setInterval(() => {
-    if (chart) {
-      const data = generateHistory(currentSymbol)
-      chart.data.datasets[0].data = data.map(d => d.price)
-      chart.data.labels = data.map(d => d.date)
-      chart.update()
+    if (chartInstance) {
+      const data = generateCandles(currentSymbol, 30);
+      const candleSeries = chartInstance.series()[0];
+      const volumeSeries = chartInstance.series()[1];
+      candleSeries.setData(data);
+      const volumeData = data.map(d => ({
+        time: d.time,
+        value: Math.random() * 1000000 + 500000,
+        color: d.close > d.open ? '#4ade8033' : '#f8717133',
+      }));
+      volumeSeries.setData(volumeData);
     }
-  }, 3000)
+  }, 3000);
 }
 
-document.getElementById('modal-shares').addEventListener('input', updateModalTotal)
+// Resize handler
+window.addEventListener('resize', () => {
+  if (chartInstance) {
+    const container = document.getElementById('chart');
+    chartInstance.resize(container.clientWidth, 250);
+  }
+});
 
+document.getElementById('modal-shares').addEventListener('input', updateModalTotal);
+
+// --- START ---
 if (!checkAuth()) {
-  document.getElementById('auth-screen').style.display = 'block'
-  document.getElementById('dashboard').style.display = 'none'
+  document.getElementById('auth-screen').style.display = 'block';
+  document.getElementById('dashboard').style.display = 'none';
 }
 
+// Register Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .then(() => console.log('✅ Service Worker registered'))
-    .catch((err) => console.log('❌ Service Worker failed:', err))
+    .catch((err) => console.log('❌ Service Worker failed:', err));
 }
 </script>
 </body>
