@@ -12,6 +12,7 @@
   <title>InvestSmart</title>
   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
   <style>
+    /* (styles - same as before) */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
     body { background: #0b1120; color: #e5e7eb; padding: 16px; min-height: 100vh; }
     .container { max-width: 600px; margin: 0 auto; }
@@ -182,7 +183,7 @@
 
 <script>
 // =============================================
-// COMPLETE INVESTMENT APP WITH CANDLESTICK CHART
+// COMPLETE APP - AUTO-FILLS SAMPLE DATA
 // =============================================
 
 let currentUser = null;
@@ -196,6 +197,14 @@ let chartInstance = null;
 let currentSymbol = "AAPL";
 let initialPortfolioValue = 0;
 
+// --- Default holdings (will be used if user has none) ---
+const DEFAULT_HOLDINGS = [
+  { symbol: "AAPL", shares: 120, price: 178.50 },
+  { symbol: "TSLA", shares: 45, price: 245.30 },
+  { symbol: "VTI", shares: 310, price: 259.80 },
+  { symbol: "BTC", shares: 0.42, price: 67200 }
+];
+
 // --- AUTH ---
 function checkAuth() {
   const saved = localStorage.getItem('investsmart_user');
@@ -203,14 +212,16 @@ function checkAuth() {
     const data = JSON.parse(saved);
     currentUser = data.user;
     cash = data.cash || 50000;
-    holdings = data.holdings || [
-      { symbol: "AAPL", shares: 120, price: 178.50 },
-      { symbol: "TSLA", shares: 45, price: 245.30 },
-      { symbol: "VTI", shares: 310, price: 259.80 },
-      { symbol: "BTC", shares: 0.42, price: 67200 }
-    ];
+    holdings = data.holdings || [];
     transactions = data.transactions || [];
-    initialPortfolioValue = data.initialPortfolioValue || getTotalValue();
+    initialPortfolioValue = data.initialPortfolioValue || 0;
+
+    // If holdings empty, inject defaults
+    if (holdings.length === 0) {
+      holdings = DEFAULT_HOLDINGS.map(h => ({ ...h }));
+      initialPortfolioValue = getTotalValue();
+      saveUser();
+    }
     showDashboard();
     return true;
   }
@@ -263,12 +274,7 @@ function registerUser() {
   localStorage.setItem('investsmart_users', JSON.stringify(users));
   currentUser = user;
   cash = 50000;
-  holdings = [
-    { symbol: "AAPL", shares: 120, price: 178.50 },
-    { symbol: "TSLA", shares: 45, price: 245.30 },
-    { symbol: "VTI", shares: 310, price: 259.80 },
-    { symbol: "BTC", shares: 0.42, price: 67200 }
-  ];
+  holdings = DEFAULT_HOLDINGS.map(h => ({ ...h }));
   transactions = [];
   initialPortfolioValue = getTotalValue();
   saveUser();
@@ -295,14 +301,17 @@ function loginUser() {
   if (data) {
     const parsed = JSON.parse(data);
     cash = parsed.cash || 50000;
-    holdings = parsed.holdings || [
-      { symbol: "AAPL", shares: 120, price: 178.50 },
-      { symbol: "TSLA", shares: 45, price: 245.30 },
-      { symbol: "VTI", shares: 310, price: 259.80 },
-      { symbol: "BTC", shares: 0.42, price: 67200 }
-    ];
+    holdings = parsed.holdings || [];
     transactions = parsed.transactions || [];
-    initialPortfolioValue = parsed.initialPortfolioValue || getTotalValue();
+    initialPortfolioValue = parsed.initialPortfolioValue || 0;
+    if (holdings.length === 0) {
+      holdings = DEFAULT_HOLDINGS.map(h => ({ ...h }));
+      initialPortfolioValue = getTotalValue();
+    }
+  } else {
+    // New user – give defaults
+    holdings = DEFAULT_HOLDINGS.map(h => ({ ...h }));
+    initialPortfolioValue = getTotalValue();
   }
   saveUser();
   showDashboard();
@@ -614,4 +623,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-  </html>
+</html>
