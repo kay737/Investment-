@@ -120,7 +120,7 @@
       <div class="chart-container">
         <div id="chart"></div>
       </div>
-      <div id="status" class="status">✅ Live Candlestick Chart</div>
+      <div id="status" class="status">✅ Candlestick Chart</div>
 
       <div class="symbol-select">
         <button onclick="changeChart('AAPL')" id="btn-AAPL" class="active">AAPL</button>
@@ -577,7 +577,6 @@ function confirmTrade() {
 function initializeApp() {
   createChart('AAPL');
   updateUI();
-  // Auto-update chart every 3 seconds
   setInterval(() => {
     if (chartInstance) {
       const data = generateCandles(currentSymbol, 30);
@@ -594,7 +593,6 @@ function initializeApp() {
   }, 3000);
 }
 
-// Resize handler
 window.addEventListener('resize', () => {
   if (chartInstance) {
     const container = document.getElementById('chart');
@@ -604,13 +602,11 @@ window.addEventListener('resize', () => {
 
 document.getElementById('modal-shares').addEventListener('input', updateModalTotal);
 
-// --- START ---
 if (!checkAuth()) {
   document.getElementById('auth-screen').style.display = 'block';
   document.getElementById('dashboard').style.display = 'none';
 }
 
-// Register Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .then(() => console.log('✅ Service Worker registered'))
